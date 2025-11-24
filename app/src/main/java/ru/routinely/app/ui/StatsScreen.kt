@@ -47,8 +47,8 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-import ru.routinely.app.model.Habit
 import ru.routinely.app.viewmodel.CalendarDayState
+import ru.routinely.app.viewmodel.CompletedHabit
 import ru.routinely.app.viewmodel.DayCompletion
 import ru.routinely.app.viewmodel.HabitViewModel
 import ru.routinely.app.viewmodel.StatsUiState
@@ -208,7 +208,7 @@ fun DayBadge(dayState: CalendarDayState, onClick: () -> Unit) {
 }
 
 @Composable
-fun DailyHabitCompletionList(selectedDate: LocalDate, habits: List<Habit>) {
+fun DailyHabitCompletionList(selectedDate: LocalDate, habits: List<CompletedHabit>) {
     val dateFormatter = remember {
         DateTimeFormatter.ofPattern("EEEE dd.MM", Locale("ru"))
     }
@@ -240,7 +240,7 @@ fun DailyHabitCompletionList(selectedDate: LocalDate, habits: List<Habit>) {
                 )
             } else {
                 habits.forEachIndexed { index, habit ->
-                    StatsHabitListItem(habit = habit, selectedDate = selectedDate)
+                    StatsHabitListItem(habit = habit)
                     if (index < habits.lastIndex) {
                         Divider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                     }
@@ -252,23 +252,13 @@ fun DailyHabitCompletionList(selectedDate: LocalDate, habits: List<Habit>) {
 
 
 @Composable
-fun StatsHabitListItem(habit: Habit, selectedDate: LocalDate) {
-    val streakValue = if (habit.currentStreak > 0) "${habit.currentStreak} дн." else "0 дн."
-    val completionDate = habit.lastCompletedDate?.let {
-        java.time.Instant.ofEpochMilli(it)
+fun StatsHabitListItem(habit: CompletedHabit) {
+    val streakValue = if (habit.habit.currentStreak > 0) "${habit.habit.currentStreak} дн." else "0 дн."
+    val completionTime = DateTimeFormatter.ofPattern("HH:mm").format(
+        java.time.Instant.ofEpochMilli(habit.completedAt)
             .atZone(java.time.ZoneId.systemDefault())
-            .toLocalDate()
-    }
-    val isCompletedOnSelectedDate = completionDate == selectedDate
-    val completionTime = if (isCompletedOnSelectedDate && habit.lastCompletedDate != null) {
-        DateTimeFormatter.ofPattern("HH:mm").format(
-            java.time.Instant.ofEpochMilli(habit.lastCompletedDate)
-                .atZone(java.time.ZoneId.systemDefault())
-                .toLocalTime()
-        )
-    } else {
-        "--:--"
-    }
+            .toLocalTime()
+    )
 
     Row(
         modifier = Modifier
@@ -278,22 +268,22 @@ fun StatsHabitListItem(habit: Habit, selectedDate: LocalDate) {
     ) {
         // 1. Иконка (используем функцию getIconByName из HabitItem.kt)
         Icon(
-            imageVector = getIconByName(habit.icon),
+            imageVector = getIconByName(habit.habit.icon),
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier
                 .size(36.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(AndroidColor.parseColor(habit.color ?: "#B88EFA")).copy(alpha = 0.85f))
+                .background(Color(AndroidColor.parseColor(habit.habit.color ?: "#B88EFA")).copy(alpha = 0.85f))
                 .padding(8.dp)
         )
         Spacer(Modifier.width(12.dp))
 
         // 2. Название и Прогресс
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = habit.name, fontWeight = FontWeight.Medium)
+            Text(text = habit.habit.name, fontWeight = FontWeight.Medium)
             Text(
-                text = if (habit.targetValue > 1) "${habit.currentValue}/${habit.targetValue} стр." else "1 раз",
+                text = if (habit.habit.targetValue > 1) "${habit.habit.currentValue}/${habit.habit.targetValue} стр." else "1 раз",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
