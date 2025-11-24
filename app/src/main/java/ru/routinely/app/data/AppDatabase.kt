@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import ru.routinely.app.model.Habit
+import ru.routinely.app.model.HabitCompletion
 
 /**
  * Основной класс базы данных приложения, построенный на Room.
@@ -12,7 +13,7 @@ import ru.routinely.app.model.Habit
  * @property version Версия схемы базы данных. Необходимо инкрементировать при каждом изменении схемы.
  * @property exportSchema Определяет, должна ли Room экспортировать схему в JSON-файл в папке проекта.
  */
-@Database(entities = [Habit::class], version = 1, exportSchema = false)
+@Database(entities = [Habit::class, HabitCompletion::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     /**

@@ -40,10 +40,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import ru.routinely.app.model.Habit
+import ru.routinely.app.model.HabitCompletion
 import ru.routinely.app.utils.HabitFilter
 import ru.routinely.app.utils.SortOrder
 import ru.routinely.app.viewmodel.HabitViewModel
-import java.util.Calendar
+import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,18 +56,16 @@ fun TodayScreen(habitViewModel: HabitViewModel) {
 
     // Подписываемся на состояние из ViewModel.
     val uiState by habitViewModel.uiState.collectAsState()
+    val completions by habitViewModel.completions.collectAsState()
+
+    val todayStart = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val completionsByHabit = completions.groupBy { it.habitId }
 
     // СОРТИРОВКА: Невыполненные (false) идут перед Выполненными (true)
     // Эта сортировка применяется только для визуального отображения на экране
     val habitsForDisplay = uiState.habits.sortedWith(
         compareBy { habit ->
-            val todayStart = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            habit.lastCompletedDate != null && habit.lastCompletedDate >= todayStart
+            completionsByHabit[habit.id]?.any { it.completionDay == todayStart } == true
         }
     )
 
@@ -73,6 +73,8 @@ fun TodayScreen(habitViewModel: HabitViewModel) {
     HomeContent(
         habits = habitsForDisplay,
         viewModel = habitViewModel,
+        completionsByHabit = completionsByHabit,
+        todayStart = todayStart,
         onHabitCheckedChange = { habit, isChecked ->
             habitViewModel.onHabitCheckedChanged(habit, isChecked)
         },
@@ -104,6 +106,8 @@ fun TodayScreen(habitViewModel: HabitViewModel) {
 fun HomeContent(
     habits: List<Habit>,
     viewModel: HabitViewModel,
+    completionsByHabit: Map<Int, List<HabitCompletion>>,
+    todayStart: Long,
     onHabitCheckedChange: (Habit, Boolean) -> Unit,
     onAddHabitClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -134,7 +138,7 @@ fun HomeContent(
                 }
             } else {
                 items(habits, key = { it.id }) { habit ->
-                    val isCompletedTodayVisually = habit.currentValue > 0
+                    val isCompletedTodayVisually = completionsByHabit[habit.id]?.any { it.completionDay == todayStart } == true
 
                     HabitItem(
                         habit = habit,

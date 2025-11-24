@@ -2,6 +2,7 @@ package ru.routinely.app.data
 
 import kotlinx.coroutines.flow.Flow
 import ru.routinely.app.model.Habit
+import ru.routinely.app.model.HabitCompletion
 import kotlinx.coroutines.flow.map // Обязательный импорт для фильтрации
 import java.util.Calendar // Обязательный импорт для определения дня недели
 
@@ -121,7 +122,7 @@ class HabitRepository(private val habitDao: HabitDao) {
     /**
      * Предоставляет Flow со списком дат выполнения всех привычек.
      */
-    val completionDates: Flow<List<Long>> = habitDao.getCompletionDates()
+    val allCompletions: Flow<List<HabitCompletion>> = habitDao.getAllCompletions()
 
     // --- Методы для специфичных операций ---
 
@@ -130,5 +131,18 @@ class HabitRepository(private val habitDao: HabitDao) {
      */
     suspend fun clearAllHabits() {
         habitDao.clearAllHabits()
+        habitDao.clearAllCompletions()
+    }
+
+    suspend fun addCompletion(completion: HabitCompletion) {
+        habitDao.insertCompletion(completion)
+    }
+
+    suspend fun removeCompletionForDay(habitId: Int, completionDay: Long) {
+        habitDao.deleteCompletionForDay(habitId, completionDay)
+    }
+
+    suspend fun getCompletionsForHabit(habitId: Int): List<HabitCompletion> {
+        return habitDao.getCompletionsForHabit(habitId)
     }
 }

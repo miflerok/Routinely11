@@ -3,6 +3,7 @@ package ru.routinely.app.data
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import ru.routinely.app.model.Habit
+import ru.routinely.app.model.HabitCompletion
 
 /**
  * DAO (Data Access Object) для сущности Habit.
@@ -66,6 +67,32 @@ interface HabitDao {
     @Query("SELECT * FROM habits ORDER BY current_streak DESC")
     fun getAllHabitsSortedByStreak(): Flow<List<Habit>>
 
+    // --- История выполнения ---
+
+    /**
+     * Сохраняет запись о выполнении привычки за конкретный день.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCompletion(completion: HabitCompletion)
+
+    /**
+     * Удаляет запись о выполнении привычки за выбранный день.
+     */
+    @Query("DELETE FROM habit_completions WHERE habit_id = :habitId AND completion_day = :completionDay")
+    suspend fun deleteCompletionForDay(habitId: Int, completionDay: Long)
+
+    /**
+     * Возвращает все выполненные привычки.
+     */
+    @Query("SELECT * FROM habit_completions ORDER BY completion_day DESC")
+    fun getAllCompletions(): Flow<List<HabitCompletion>>
+
+    /**
+     * Возвращает историю выполнений конкретной привычки.
+     */
+    @Query("SELECT * FROM habit_completions WHERE habit_id = :habitId ORDER BY completion_day DESC")
+    suspend fun getCompletionsForHabit(habitId: Int): List<HabitCompletion>
+
     // --- Специфичные запросы для обновления и статистики ---
 
     /**
@@ -103,12 +130,12 @@ interface HabitDao {
      * Возвращает список всех дат выполнения для всех привычек.
      * Необходимо для построения календаря и расчета статистики.
      */
-    @Query("SELECT last_completed_date FROM habits WHERE last_completed_date IS NOT NULL")
-    fun getCompletionDates(): Flow<List<Long>>
-
-    /**
-     * Полностью очищает таблицу привычек. Используется для функции "Сброс данных".
-     */
     @Query("DELETE FROM habits")
     suspend fun clearAllHabits()
+
+    /**
+     * Полностью очищает историю выполнения привычек.
+     */
+    @Query("DELETE FROM habit_completions")
+    suspend fun clearAllCompletions()
 }
