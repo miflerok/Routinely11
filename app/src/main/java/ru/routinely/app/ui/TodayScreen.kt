@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import ru.routinely.app.model.Habit
+import ru.routinely.app.model.HabitCompletion
 import ru.routinely.app.utils.HabitFilter
 import ru.routinely.app.utils.SortOrder
 import ru.routinely.app.viewmodel.HabitViewModel
@@ -72,6 +73,8 @@ fun TodayScreen(habitViewModel: HabitViewModel) {
     HomeContent(
         habits = habitsForDisplay,
         viewModel = habitViewModel,
+        completionsByHabit = completionsByHabit,
+        todayStart = todayStart,
         onHabitCheckedChange = { habit, isChecked ->
             habitViewModel.onHabitCheckedChanged(habit, isChecked)
         },
@@ -103,6 +106,8 @@ fun TodayScreen(habitViewModel: HabitViewModel) {
 fun HomeContent(
     habits: List<Habit>,
     viewModel: HabitViewModel,
+    completionsByHabit: Map<Long, List<HabitCompletion>>,
+    todayStart: Long,
     onHabitCheckedChange: (Habit, Boolean) -> Unit,
     onAddHabitClick: () -> Unit,
     modifier: Modifier = Modifier
