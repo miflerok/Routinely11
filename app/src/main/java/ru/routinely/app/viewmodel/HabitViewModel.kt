@@ -197,10 +197,11 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         val completionHistory = buildCompletionHistory(habits, completions)
         val completionDatesSet = completionHistory.keys
         val now = LocalDate.now()
+        val startOfCurrentWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val weeklyPercentage = calculateCompletionPercentage(
             habits = habits,
             completionHistory = completionHistory,
-            startDate = now.minusDays(6),
+            startDate = startOfCurrentWeek,
             endDate = now
         )
         val currentMonthStart = now.withDayOfMonth(1)
