@@ -354,12 +354,12 @@ fun StatProgressChart(weeklyTrend: List<DayCompletion>, weeklyPercentage: Int) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Прогресс за неделю",
+                text = "Статистика ",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Среднее выполнение: $weeklyPercentage%",
+                text = "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
