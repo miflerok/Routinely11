@@ -106,7 +106,7 @@ fun TodayScreen(habitViewModel: HabitViewModel) {
 fun HomeContent(
     habits: List<Habit>,
     viewModel: HabitViewModel,
-    completionsByHabit: Map<Long, List<HabitCompletion>>,
+    completionsByHabit: Map<Int, List<HabitCompletion>>,
     todayStart: Long,
     onHabitCheckedChange: (Habit, Boolean) -> Unit,
     onAddHabitClick: () -> Unit,
