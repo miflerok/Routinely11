@@ -11,6 +11,10 @@ class UserPreferencesRepositoryTest {
 
     private val repository: UserPreferencesRepository = TestUserPreferencesRepository()
 
+    /**
+     * Пока в хранилище ничего не записано, поток настроек должен выдавать значения темы и
+     * уведомлений по умолчанию.
+     */
     @Test
     fun `userPreferencesFlow emits defaults when store is empty`() = runTest {
         val preferences = repository.userPreferencesFlow.first()
@@ -19,6 +23,9 @@ class UserPreferencesRepositoryTest {
         assertTrue(preferences.notificationsEnabled)
     }
 
+    /**
+     * Сохранённый выбор тёмной темы должен отражаться в следующем эмите потока настроек.
+     */
     @Test
     fun `setDarkTheme persists provided value`() = runTest {
         repository.setDarkTheme(true)
@@ -27,6 +34,10 @@ class UserPreferencesRepositoryTest {
         assertTrue(preferences.isDarkTheme)
     }
 
+    /**
+     * Сохранённое состояние флага уведомлений должно появляться при следующей эмиссии потока
+     * настроек.
+     */
     @Test
     fun `setNotificationsEnabled persists provided value`() = runTest {
         repository.setNotificationsEnabled(false)

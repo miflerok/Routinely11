@@ -38,6 +38,10 @@ class HabitViewModelTest {
 
     private fun createViewModel() = HabitViewModel(repository, userPreferencesRepository)
 
+    /**
+     * Сохранение привычки с указанным временем уведомления должно отправить единственный эвент
+     * планирования с данными привычки, чтобы UI мог запросить установку будильника.
+     */
     @Test
     fun `saveHabit emits schedule event when notification time is present`() = runTest {
         val viewModel = createViewModel()
@@ -60,6 +64,10 @@ class HabitViewModelTest {
         assertNotNull(event.habit.id)
     }
 
+    /**
+     * Сохранение привычки без времени уведомления должно отправлять эвент отмены, чтобы убрать любой
+     * ранее запланированный будильник для этой привычки.
+     */
     @Test
     fun `saveHabit emits cancel event when notification is absent`() = runTest {
         val viewModel = createViewModel()
@@ -81,6 +89,10 @@ class HabitViewModelTest {
         assertEquals(1, event.habitId)
     }
 
+    /**
+     * Пометка привычки как выполненной должна увеличить прогресс, обновить серийности и добавить
+     * запись о выполнении в историю.
+     */
     @Test
     fun `onHabitCheckedChanged updates progress streak and history`() = runTest {
         val existing = Habit(id = 5, name = "Run", type = "daily", targetValue = 1, currentValue = 0)
@@ -101,6 +113,9 @@ class HabitViewModelTest {
         assertEquals(existing.id, completions.first().habitId)
     }
 
+    /**
+     * Очистка данных должна удалить все сохранённые привычки и связанные с ними записи о выполнениях.
+     */
     @Test
     fun `clearAllData removes habits and completions`() = runTest {
         val habit = Habit(id = 7, name = "Stretch", type = "daily", targetValue = 1, currentValue = 1)
@@ -121,6 +136,10 @@ class HabitViewModelTest {
         assertEquals(0, habitDao.latestCompletions().size)
     }
 
+    /**
+     * Состояние экрана статистики должно считать общее количество привычек, лучшие серии и процент
+     * выполнений за неделю/месяц на основе сохранённых привычек и истории выполнений.
+     */
     @Test
     fun `statsUiState calculates weekly and monthly percentages`() = runTest {
         val today = LocalDate.now()
@@ -180,6 +199,10 @@ class HabitViewModelTest {
         assertEquals(0.5f, recentTrend[1].completionRatio, 0.001f)
     }
 
+    /**
+     * Выбор даты на экране статистики должен обновлять выделение в календаре и показывать только
+     * привычки, закрытые в выбранный день.
+     */
     @Test
     fun `onStatsDateSelected updates calendar selection and habits`() = runTest {
         val today = LocalDate.now()
@@ -230,6 +253,10 @@ class HabitViewModelTest {
         assertEquals(true, selectedDay.isCompleted)
     }
 
+    /**
+     * Двойной выбор сортировки по имени должен менять направление сортировки, сохраняя выбранный
+     * режим сортировки.
+     */
     @Test
     fun `setSortOrder toggles alphabetical direction on repeated selection`() = runTest {
         val viewModel = createViewModel()
@@ -248,6 +275,9 @@ class HabitViewModelTest {
         assertEquals(false, descendingState.isNameSortAsc)
     }
 
+    /**
+     * Смена режима фильтрации должна сбрасывать ранее выбранный фильтр по категории.
+     */
     @Test
     fun `setFilter clears category filter when changing mode`() = runTest {
         val viewModel = createViewModel()
@@ -263,6 +293,10 @@ class HabitViewModelTest {
         assertNull(state.categoryFilter)
     }
 
+    /**
+     * Обновление прогресса до целевого значения должно отмечать привычку выполненной, создавать
+     * запись о выполнении и увеличивать счётчики серий.
+     */
     @Test
     fun `updateHabitProgress saves completion and streak when reaching target`() = runTest {
         val habit = Habit(id = 20, name = "Pushups", type = "daily", targetValue = 10, currentValue = 5)
@@ -281,6 +315,10 @@ class HabitViewModelTest {
         assertEquals(habit.id, completions.first().habitId)
     }
 
+    /**
+     * Удаление привычки должно убрать её из хранения и отправить эвент отмены для очистки
+     * запланированных уведомлений.
+     */
     @Test
     fun `deleteHabit cancels notification and removes stored habit`() = runTest {
         val habit = Habit(id = 30, name = "Journal", type = "daily")

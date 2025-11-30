@@ -20,6 +20,10 @@ class HabitRepositoryTest {
         repository = HabitRepository(habitDao)
     }
 
+    /**
+     * При запросе списка на сегодня должны возвращаться ежедневные привычки и те, что назначены на
+     * текущий день недели.
+     */
     @Test
     fun `habitsForToday returns daily and scheduled habits only`() = runTest {
         val todayIndex = getTodayIndex()
@@ -37,6 +41,9 @@ class HabitRepositoryTest {
         assertEquals(listOf(daily, scheduledToday).toSet(), result.toSet())
     }
 
+    /**
+     * Сортировка по имени по возрастанию должна упорядочить привычки в алфавитном порядке от А до Я.
+     */
     @Test
     fun `getAllHabitsSortedByNameASC sorts alphabetically`() = runTest {
         val habitA = Habit(id = 1, name = "Alpha", type = "daily")
@@ -52,6 +59,9 @@ class HabitRepositoryTest {
         assertEquals(listOf(habitA, habitB, habitC), result)
     }
 
+    /**
+     * Сортировка по имени по убыванию должна располагать привычки в обратном алфавитном порядке.
+     */
     @Test
     fun `getAllHabitsSortedByNameDESC sorts reverse alphabetically`() = runTest {
         val habitA = Habit(id = 1, name = "Alpha", type = "daily")
@@ -67,6 +77,9 @@ class HabitRepositoryTest {
         assertEquals(listOf(habitC, habitB, habitA), result)
     }
 
+    /**
+     * Сортировка по серии должна ставить привычку с самой длинной текущей серией первой.
+     */
     @Test
     fun `getAllHabitsSortedByStreak orders by longest streak first`() = runTest {
         val slow = Habit(id = 1, name = "Slow", type = "daily", currentStreak = 1)
@@ -82,6 +95,9 @@ class HabitRepositoryTest {
         assertEquals(listOf(fast, medium, slow), result)
     }
 
+    /**
+     * Очистка всех привычек должна одновременно удалять все выполнения для согласованности данных.
+     */
     @Test
     fun `clearAllHabits removes habits and completions together`() = runTest {
         val habit = Habit(id = 10, name = "Track", type = "daily")
@@ -100,6 +116,9 @@ class HabitRepositoryTest {
         assertTrue(repository.allCompletions.first().isEmpty())
     }
 
+    /**
+     * Удаление выполнения за конкретный день не должно затрагивать остальные записи о выполнениях.
+     */
     @Test
     fun `removeCompletionForDay deletes only matching record`() = runTest {
         val habit = Habit(id = 15, name = "Hydrate", type = "daily")
