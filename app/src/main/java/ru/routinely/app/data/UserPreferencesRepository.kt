@@ -15,7 +15,9 @@ import java.io.IOException
 // Создаем расширение для Context, чтобы получать доступ к хранилищу
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
 
-class UserPreferencesRepository(private val context: Context) {
+open class UserPreferencesRepository(protected val dataStore: DataStore<Preferences>) {
+
+    constructor(context: Context) : this(context.dataStore)
 
     private object PreferencesKeys {
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
@@ -23,7 +25,7 @@ class UserPreferencesRepository(private val context: Context) {
     }
 
     // Читаем настройки как поток данных
-    val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data
+    open val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
@@ -38,15 +40,15 @@ class UserPreferencesRepository(private val context: Context) {
         }
 
     // Сохраняем тему
-    suspend fun setDarkTheme(isDark: Boolean) {
-        context.dataStore.edit { preferences ->
+    open suspend fun setDarkTheme(isDark: Boolean) {
+        dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_DARK_THEME] = isDark
         }
     }
 
     // Сохраняем настройку уведомлений
-    suspend fun setNotificationsEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
+    open suspend fun setNotificationsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
             preferences[PreferencesKeys.NOTIFICATIONS_ENABLED] = enabled
         }
     }
