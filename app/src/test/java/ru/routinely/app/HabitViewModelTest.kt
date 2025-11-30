@@ -230,12 +230,11 @@ class HabitViewModelTest {
         date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     private class TestLifecycleOwner : LifecycleOwner {
-        private val registry = LifecycleRegistry(this)
-
-        init {
-            registry.currentState = Lifecycle.State.RESUMED
+        private val registry = LifecycleRegistry(this).apply {
+            currentState = Lifecycle.State.RESUMED
         }
 
-        override fun getLifecycle(): Lifecycle = registry
+        override val lifecycle: Lifecycle
+            get() = registry
     }
 }
