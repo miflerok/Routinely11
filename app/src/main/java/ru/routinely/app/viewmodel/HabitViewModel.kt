@@ -181,7 +181,7 @@ class HabitViewModel(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000L),
+        started = SharingStarted.Eagerly,
         initialValue = HabitUiState()
     )
 
