@@ -236,7 +236,6 @@ class HabitViewModelTest {
             registry.currentState = Lifecycle.State.RESUMED
         }
 
-        override val lifecycle: Lifecycle
-            get() = registry
+        override fun getLifecycle(): Lifecycle = registry
     }
 }
