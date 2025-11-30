@@ -10,12 +10,16 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import ru.routinely.app.data.HabitRepository
 import ru.routinely.app.model.Habit
 import ru.routinely.app.viewmodel.HabitViewModel
 import ru.routinely.app.viewmodel.NotificationEvent
+import ru.routinely.app.utils.HabitFilter
+import ru.routinely.app.utils.SortOrder
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -35,7 +39,7 @@ class HabitViewModelTest {
     private fun createViewModel() = HabitViewModel(repository, userPreferencesRepository)
 
     @Test
-    fun saveHabit_emitsScheduleEventWhenNotificationTimeIsPresent() = runTest {
+    fun `saveHabit emits schedule event when notification time is present`() = runTest {
         val viewModel = createViewModel()
         val events = mutableListOf<NotificationEvent>()
         val owner = TestLifecycleOwner()
@@ -57,7 +61,7 @@ class HabitViewModelTest {
     }
 
     @Test
-    fun saveHabit_emitsCancelEventWhenNotificationAbsent() = runTest {
+    fun `saveHabit emits cancel event when notification is absent`() = runTest {
         val viewModel = createViewModel()
         val events = mutableListOf<NotificationEvent>()
         val owner = TestLifecycleOwner()
@@ -78,7 +82,7 @@ class HabitViewModelTest {
     }
 
     @Test
-    fun onHabitCheckedChanged_updatesProgressStreakAndHistory() = runTest {
+    fun `onHabitCheckedChanged updates progress streak and history`() = runTest {
         val existing = Habit(id = 5, name = "Run", type = "daily", targetValue = 1, currentValue = 0)
         habitDao.insertHabit(existing)
         val viewModel = createViewModel()
@@ -98,7 +102,7 @@ class HabitViewModelTest {
     }
 
     @Test
-    fun clearAllData_removesHabitsAndCompletions() = runTest {
+    fun `clearAllData removes habits and completions`() = runTest {
         val habit = Habit(id = 7, name = "Stretch", type = "daily", targetValue = 1, currentValue = 1)
         habitDao.insertHabit(habit)
         repository.addCompletion(
@@ -118,7 +122,7 @@ class HabitViewModelTest {
     }
 
     @Test
-    fun statsUiState_calculatesWeeklyAndMonthlyPercentages() = runTest {
+    fun `statsUiState calculates weekly and monthly percentages`() = runTest {
         val today = LocalDate.now()
         val creationDate = today.minusDays(1)
 
@@ -177,7 +181,7 @@ class HabitViewModelTest {
     }
 
     @Test
-    fun onStatsDateSelected_updatesCalendarSelectionAndHabits() = runTest {
+    fun `onStatsDateSelected updates calendar selection and habits`() = runTest {
         val today = LocalDate.now()
         val creationDate = today.minusDays(2)
         val targetDate = today.minusDays(1)
@@ -224,6 +228,75 @@ class HabitViewModelTest {
         val selectedDay = state.calendarDays.first { it.date == targetDate }
         assertEquals(true, selectedDay.isSelected)
         assertEquals(true, selectedDay.isCompleted)
+    }
+
+    @Test
+    fun `setSortOrder toggles alphabetical direction on repeated selection`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setSortOrder(SortOrder.BY_NAME)
+        advanceUntilIdle()
+        val ascendingState = viewModel.uiState.value
+
+        viewModel.setSortOrder(SortOrder.BY_NAME)
+        advanceUntilIdle()
+        val descendingState = viewModel.uiState.value
+
+        assertEquals(SortOrder.BY_NAME, ascendingState.sortOrder)
+        assertTrue(ascendingState.isNameSortAsc)
+        assertEquals(SortOrder.BY_NAME, descendingState.sortOrder)
+        assertEquals(false, descendingState.isNameSortAsc)
+    }
+
+    @Test
+    fun `setFilter clears category filter when changing mode`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setCategoryFilter("Health")
+        advanceUntilIdle()
+
+        viewModel.setFilter(HabitFilter.TODAY)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(HabitFilter.TODAY, state.habitFilter)
+        assertNull(state.categoryFilter)
+    }
+
+    @Test
+    fun `updateHabitProgress saves completion and streak when reaching target`() = runTest {
+        val habit = Habit(id = 20, name = "Pushups", type = "daily", targetValue = 10, currentValue = 5)
+        habitDao.insertHabit(habit)
+        val viewModel = createViewModel()
+
+        viewModel.updateHabitProgress(habit, newValue = 10)
+        advanceUntilIdle()
+
+        val updated = habitDao.latestHabits().first { it.id == habit.id }
+        val completions = repository.allCompletions.first()
+
+        assertEquals(10, updated.currentValue)
+        assertEquals(1, updated.currentStreak)
+        assertEquals(1, completions.size)
+        assertEquals(habit.id, completions.first().habitId)
+    }
+
+    @Test
+    fun `deleteHabit cancels notification and removes stored habit`() = runTest {
+        val habit = Habit(id = 30, name = "Journal", type = "daily")
+        habitDao.insertHabit(habit)
+        val viewModel = createViewModel()
+
+        val events = mutableListOf<NotificationEvent>()
+        val owner = TestLifecycleOwner()
+        viewModel.notificationEvent.observe(owner) { events.add(it) }
+
+        viewModel.deleteHabit(habit)
+        advanceUntilIdle()
+
+        assertTrue(habitDao.latestHabits().isEmpty())
+        val cancelEvent = events.single() as NotificationEvent.Cancel
+        assertEquals(habit.id, cancelEvent.habitId)
     }
 
     private fun startOfDayMillis(date: LocalDate): Long =
