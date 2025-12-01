@@ -100,6 +100,7 @@ data class StatsUiState(
     val totalHabitsCount: Int = 0,
     val bestStreakOverall: Int = 0,
     val weeklyCompletionPercentage: Int = 0,
+    val rollingWeeklyCompletionPercentage: Int = 0,
     val monthlyCompletionPercentage: Int = 0,
     val calendarDays: List<CalendarDayState> = emptyList(),
     val weekRangeLabel: String = "",
@@ -212,8 +213,18 @@ class HabitViewModel(
 
         val now = LocalDate.now()
 
-        // Расчет процентов за неделю (учитывает дату создания и расписание)
+        // Расчет процентов за неделю (понедельник–воскресенье текущей недели)
+        val startOfCalendarWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val endOfCalendarWeek = minOf(now, startOfCalendarWeek.plusDays(6))
         val weeklyPercentage = calculateAccuratePercentage(
+            habits = habits,
+            completions = allCompletions,
+            startDate = startOfCalendarWeek,
+            endDate = endOfCalendarWeek
+        )
+
+        // Расчет процентов за последние 7 дней (сквозная неделя)
+        val rollingWeeklyPercentage = calculateAccuratePercentage(
             habits = habits,
             completions = allCompletions,
             startDate = now.minusDays(6),
@@ -256,6 +267,7 @@ class HabitViewModel(
             totalHabitsCount = totalCount,
             bestStreakOverall = bestStreak ?: 0,
             weeklyCompletionPercentage = weeklyPercentage,
+            rollingWeeklyCompletionPercentage = rollingWeeklyPercentage,
             monthlyCompletionPercentage = monthlyPercentage,
             calendarDays = calendarDays,
             weekRangeLabel = weekRangeLabel,
