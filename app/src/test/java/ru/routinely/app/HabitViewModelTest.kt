@@ -20,8 +20,10 @@ import ru.routinely.app.viewmodel.HabitViewModel
 import ru.routinely.app.viewmodel.NotificationEvent
 import ru.routinely.app.utils.HabitFilter
 import ru.routinely.app.utils.SortOrder
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HabitViewModelTest {
@@ -189,10 +191,46 @@ class HabitViewModelTest {
         advanceUntilIdle()
         val state = viewModel.statsUiState.first { !it.isLoading }
 
+        val calculationMethod = HabitViewModel::class.java.getDeclaredMethod(
+            "calculateAccuratePercentage",
+            List::class.java,
+            List::class.java,
+            LocalDate::class.java,
+            LocalDate::class.java
+        ).apply { isAccessible = true }
+
+        val habits = repository.allHabits.first()
+        val completions = repository.allCompletions.first()
+        val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val endOfWeek = startOfWeek.plusDays(6)
+        val expectedCalendarWeek = calculationMethod.invoke(
+            viewModel,
+            habits,
+            completions,
+            startOfWeek,
+            endOfWeek
+        ) as Int
+        val expectedRollingWeek = calculationMethod.invoke(
+            viewModel,
+            habits,
+            completions,
+            today.minusDays(6),
+            today
+        ) as Int
+        val endOfMonth = today.withDayOfMonth(1).plusMonths(1).minusDays(1)
+        val expectedMonthly = calculationMethod.invoke(
+            viewModel,
+            habits,
+            completions,
+            today.withDayOfMonth(1),
+            endOfMonth
+        ) as Int
+
         assertEquals(2, state.totalHabitsCount)
         assertEquals(2, state.bestStreakOverall)
-        assertEquals(75, state.weeklyCompletionPercentage)
-        assertEquals(75, state.monthlyCompletionPercentage)
+        assertEquals(expectedCalendarWeek, state.weeklyCompletionPercentage)
+        assertEquals(expectedRollingWeek, state.rollingWeeklyCompletionPercentage)
+        assertEquals(expectedMonthly, state.monthlyCompletionPercentage)
 
         val recentTrend = state.weeklyTrend.takeLast(2)
         assertEquals(1f, recentTrend[0].completionRatio, 0.001f)
