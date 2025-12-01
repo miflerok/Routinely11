@@ -82,7 +82,7 @@ fun StatsScreen(
             Spacer(Modifier.height(24.dp))
             StatProgressChart(
                 weeklyTrend = statsUiState.weeklyTrend,
-                weeklyPercentage = statsUiState.weeklyCompletionPercentage
+                weeklyPercentage = statsUiState.rollingWeeklyCompletionPercentage
             )
             Spacer(Modifier.height(16.dp))
         }
@@ -372,7 +372,7 @@ fun StatProgressChart(weeklyTrend: List<DayCompletion>, weeklyPercentage: Int) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Прогресс за неделю",
+                text = "Прогресс за 7 дней",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
