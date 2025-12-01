@@ -215,7 +215,7 @@ class HabitViewModel(
 
         // Расчет процентов за неделю (понедельник–воскресенье текущей недели)
         val startOfCalendarWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val endOfCalendarWeek = minOf(now, startOfCalendarWeek.plusDays(6))
+        val endOfCalendarWeek = startOfCalendarWeek.plusDays(6)
         val weeklyPercentage = calculateAccuratePercentage(
             habits = habits,
             completions = allCompletions,
@@ -233,11 +233,12 @@ class HabitViewModel(
 
         // Расчет процентов за текущий месяц
         val currentMonthStart = now.withDayOfMonth(1)
+        val currentMonthEnd = currentMonthStart.plusMonths(1).minusDays(1)
         val monthlyPercentage = calculateAccuratePercentage(
             habits = habits,
             completions = allCompletions,
             startDate = currentMonthStart,
-            endDate = now
+            endDate = currentMonthEnd
         )
 
         // Формирование данных для календаря

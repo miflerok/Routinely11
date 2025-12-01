@@ -202,7 +202,7 @@ class HabitViewModelTest {
         val habits = repository.allHabits.first()
         val completions = repository.allCompletions.first()
         val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val endOfWeek = minOf(today, startOfWeek.plusDays(6))
+        val endOfWeek = startOfWeek.plusDays(6)
         val expectedCalendarWeek = calculationMethod.invoke(
             viewModel,
             habits,
@@ -217,12 +217,20 @@ class HabitViewModelTest {
             today.minusDays(6),
             today
         ) as Int
+        val endOfMonth = today.withDayOfMonth(1).plusMonths(1).minusDays(1)
+        val expectedMonthly = calculationMethod.invoke(
+            viewModel,
+            habits,
+            completions,
+            today.withDayOfMonth(1),
+            endOfMonth
+        ) as Int
 
         assertEquals(2, state.totalHabitsCount)
         assertEquals(2, state.bestStreakOverall)
         assertEquals(expectedCalendarWeek, state.weeklyCompletionPercentage)
         assertEquals(expectedRollingWeek, state.rollingWeeklyCompletionPercentage)
-        assertEquals(75, state.monthlyCompletionPercentage)
+        assertEquals(expectedMonthly, state.monthlyCompletionPercentage)
 
         val recentTrend = state.weeklyTrend.takeLast(2)
         assertEquals(1f, recentTrend[0].completionRatio, 0.001f)
